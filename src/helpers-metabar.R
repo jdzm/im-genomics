@@ -17,38 +17,6 @@ load_tax_nanopore <- function(path, silva = TRUE) {
   return(abundances)
 }
 
-
-
-# plot_taxonomy <- function (df, taxa_level ="Genus", n_taxa = 15){
-#   # the df needs to contain at least the genera specified. also
-#   if (!(taxa_level %in% c("Domain", "Kingdom", "Phylum", "Class", "Order","Family","Genus","Species"))){
-#     stop ("Unvalid Taxonomic category")
-#   }
-#   if (sum(c("count", "sample")%in% colnames(df)) != 2){
-#     stop ("Input df needs to contain the columns 'sample' and 'count'")
-#   }
-#   # subset selected columns 
-#   subset_df = df %>% select(one_of(taxa_level),count,sample)
-#   colnames(subset_df) <- c("taxa","count","sample")
-#   top_taxa = (subset_df %>% group_by(taxa) %>% summarise (count = sum (count)) %>% arrange(desc(count)))$taxa[1:n_taxa]
-  
-#   mylevels = c(top_taxa,"Other") # all groups not included in the top n_taxa will be collapsed onto "Other"
-#   mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(n_taxa+1)
-  
-#   composition = subset_df %>% 
-#     mutate (taxa = ifelse (taxa %in% top_taxa, taxa, "Other")) %>% group_by(taxa,sample) %>% 
-#     summarise (count = sum (count), .groups = 'drop') %>% 
-#     mutate (taxa = factor(taxa, levels = mylevels))
-  
-#   taxaplot <- composition %>%
-#     ggplot(aes (x = sample, y=count, fill=taxa)) +
-#     geom_col(position='fill')+
-#     scale_fill_manual(values = mycolors, name = taxa_level)+
-#     theme_bw()+xlab(NULL)+ylab("Relative abundance")
-#   return (taxaplot)
-# }
-
-
 #### 2. Plot taxonomy data
 plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15) {
     require(tidyverse)
