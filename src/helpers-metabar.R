@@ -59,3 +59,19 @@ plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15) {
     
     return(taxaplot)
 }
+
+#### 3. ONT abundance to microeco
+get_tax_table = function (abundance, digits = 4, silva = T){
+  # extract taxonomy from raw abundance table and add unique names
+  tax_cols <- if (silva) {
+    c("Domain", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus")
+  } else {
+    c("Domain", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+  }
+  taxtable <- abundance %>%
+    select(all_of(tax_cols)) %>% distinct() %>%
+    mutate(taxname = paste0("TAX", sprintf(paste0("%0", digits, "d"), row_number()))) %>%
+    select (taxname, all_of(tax_cols))
+  return (taxtable)
+}
+
