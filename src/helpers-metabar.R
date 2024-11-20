@@ -75,3 +75,23 @@ get_tax_table = function (abundance, digits = 4, silva = T){
   return (taxtable)
 }
 
+#### 4. Plot rarecurve in ggplot style
+rarecurve_ggstyle = function (mat, step = 50, df = F){
+  # matrix needs to be transposed (samples as rows, columns for OTUs)
+  require(vegan)
+  rc  <- rarecurve(mat, step = step, tidy = T)
+  if (df){
+    return(as_tibble(rc))
+  }
+  curve <- rc %>% ggplot(aes(x = Sample, y = Species, group = Site)) +
+    geom_line() +
+    geom_label(
+      data = rc %>% group_by(Site) %>% filter(Sample == max(Sample)), 
+      aes(label = Site, x = Sample, y = Species),
+      hjust = -0.1, size = 4, color = "black", fill = "white", inherit.aes = FALSE, alpha=0.8) +
+    labs(x = "Sample Size", y = "Species") +
+    scale_x_continuous(expand = expansion(mult = c(0.05, 0.1)))
+  return(curve) 
+}
+
+
