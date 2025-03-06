@@ -18,7 +18,7 @@ load_tax_nanopore <- function(path, silva = TRUE) {
 }
 
 #### 2. Plot taxonomy data
-plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15) {
+plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15, relabund=T) {
     require(tidyverse)
     library(RColorBrewer)  # For color palettes
     # Validate taxonomic level and required columns
@@ -51,7 +51,7 @@ plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15) {
     # Plot the taxonomy composition
     taxaplot <- composition %>%
         ggplot(aes(x = sample, y = count, fill = taxa)) +
-        geom_col(position = 'fill') +
+        geom_col(position = ifelse(relabund,'fill','stack')) +
         scale_fill_manual(values = mycolors, name = taxa_level) +
         theme_bw() + 
         xlab(NULL) + 
