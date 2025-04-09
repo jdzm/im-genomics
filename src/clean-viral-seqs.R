@@ -5,16 +5,16 @@ msg <- paste0(suppressPackageStartupMessages(lapply (my_packages, require, chara
 set.seed(1225)
 
 # Define input/output dirs
-seqpath <- "I:/Common/COLLABORATORI/_ALLIEVI LABORATORISTI/2024/Giovannini Sofia/studio Emys/sequenze Adeno/sequenze corrette/"
+seqpath <- "I:/Common/COLLABORATORI/_ALLIEVI LABORATORISTI/2024/Giovannini Sofia/studio Trachemys/Sequenze adenovirus/sequenze adenovirus corrette/"
 outpath <- paste0(seqpath, "results/") # specify any outpath that you like. Make sure it ends with "/"
 setwd(seqpath)
 dir.create(outpath, recursive = T, showWarnings = F)
 
 # list all files and extract sample IDs
-my_seqs = list.files(seqpath, pattern = "Adeno") %>% as_tibble() %>% 
-  separate (value, into = c("Adeno", "id", "sense", "polType"), sep = "_", remove = F) %>% select (-polType,-Adeno) %>% 
-  mutate (id = as.integer(id)) %>% arrange(id) 
+my_seqs = list.files(seqpath, pattern = "*.fas") %>% as_tibble() %>% 
+  separate (value, into = c("Adeno", "id", "sense", "polType"), sep = "_", remove = F) %>% select (-polType,-Adeno) 
 
+unique(my_seqs$sense) # check forward and reverse names for later
 
 ### Part 1. Get consensus sequences ####
 # initialize vectors for saving the sequences. We will be using the dnastrings type 
@@ -27,8 +27,8 @@ all_sequences=DNAStringSet()
 all_alignments=c() # this one is a list. it will contain nested DNAstrings alignment objects for visual review
 for (sid in ids){
   # Read forward and reverse sequences from FASTA files
-  forward_seq <- readDNAStringSet(paste0(seqpath, "Adeno_",sid,"_F_polF inner AdenoC.fas"))
-  reverse_seq <- readDNAStringSet(paste0(seqpath, "Adeno_",sid,"_R_polR inner AdenoC.fas"))
+  forward_seq <- readDNAStringSet(paste0(seqpath, filter(my_seqs, id==sid, sense == "PolF") %>% pull(value)))
+  reverse_seq <- readDNAStringSet(paste0(seqpath, filter(my_seqs, id==sid, sense == "PolR") %>% pull(value)))
   
   # Reverse complement the reverse sequences
   reverse_seq_rc <- reverseComplement(reverse_seq)
