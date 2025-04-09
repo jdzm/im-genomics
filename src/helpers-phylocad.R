@@ -1,10 +1,4 @@
 #### Phylogeny Helpers ####
-
-library(Biostrings)
-library(GenomicFeatures)
-library(rtracklayer)
-library(stringr)
-
 #### 1. Extract 16S sequences from AXEK experiments ####
 # this function is cool but it is a bit too specific to the AXEK project. Maybe I 
 # generalize it in the future
