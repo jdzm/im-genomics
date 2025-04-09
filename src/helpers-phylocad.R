@@ -3,7 +3,13 @@
 # this function is cool but it is a bit too specific to the AXEK project. Maybe I 
 # generalize it in the future
 extract_16S_rRNA_sequences <- function(fasta_files, gff_files) {
-  if (length(fasta_files) != length(gff_files)) {
+  # what does this function do? It gets all the rRNA features that have 16S rRNA
+  # as product. Then, it gets the coordinates from the gtf, extracts the DNA from 
+  # the fasta and reverse-complements it if it is found in the rev strand. Then 
+  # it adds all the sequences to a 'sequences' DNAstringset variable and returns
+  # it. Id's are created including the genomic coordinates.
+
+    if (length(fasta_files) != length(gff_files)) {
     stop("Lengths of fasta_files and gff_files must be the same")
   }
   require ("Biostrings"); require (GenomicFeatures); require (rtracklayer); require (stringr)
