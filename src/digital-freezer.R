@@ -1,5 +1,4 @@
-library(tidyverse); library(readxl); library(ggsci)
-library(rgbif)
+library(tidyverse); library(readxl); library(ggsci); library(rgbif)
 
 dig_freez = "C:/Data/digital-freezer/databases/" # for local work
 dig_freez = "I:/Common/COLLABORATORI/Calore Red/Digital Freezer/" # for remote work
@@ -15,28 +14,28 @@ global_fun = read_csv(paste0(dig_freez, "GlobalFungiDB/GlobalFungiDB_latest.csv"
 
 # Import Duarte's list
 duarte_list = read_xlsx(paste0(dig_freez, "Aquatic Hyphomycetes list/Lista F_Duarte.xlsx"), sheet = 1, skip = 2) %>% 
-  select(species=`Accepted name`, synonym = Synonyms)%>% 
-  separate_longer_delim(synonym, delim = " / ") # expand the synonyms to long format
+  select(species=`Accepted name`, synonym = Synonyms)
+# %>% separate_longer_delim(synonym, delim = " / ") # expand the synonyms to long format
 
 # Import our table
 ah_list = read_excel(paste0(dig_freez, "Aquatic Hyphomycetes list/Taxa_AH_Chapter 1_PhD.xlsx"), sheet = "sh_ids") %>% 
   select (species)
 
+
 # Objective 1. Get all the UNITE SHs related to our species. 
-# Label those with no SH for further investigation. We are possibly missing some 
-# due to not checking synonyms here. Keep in mind that some spps have multiple SHs
-ah_db <- ah_list %>% mutate(in_unite = species %in% unite$species) %>% 
-  left_join(unite, by = "species") 
+# join Duarte's list with Unite. I want SH, SH type and Synonyms
+cross_duarte <- duarte_list %>% left_join(unite, by = "species")
 
+duarte_syns <- duarte_list %>% separate_longer_delim(synonym, delim = " / ") %>% 
+  filter(!is.na(synonym), synonym %in% unite$species) %>% rename (species_d = species) %>% 
+  left_join(unite,by = c("synonym"="species")) %>% filter (!is.na(sh)) %>% mutate (notes = "annotated synonyms") %>% 
+  rename(species=synonym, synonym = species_d)
 
-# Articulospora genus has a lot of SHs that are Articulospora sp. Not sure what to do 
-# with this. # here is a checker
-ah_db %>% group_by(species) %>% select (-accession, -sh_type) %>% 
-  mutate (all_shs = str_c(sh, collapse = ";"), n = n()) %>% 
-  arrange(desc(n)) %>% ungroup %>% select(-sh) %>% distinct() %>% select (-taxonomy)
+export <- cross_duarte %>% bind_rows(duarte_syns) %>% 
+  arrange (species)
 
-ah_db_collapsed <- ah_db %>% group_by(species,in_unite) %>% select (-accession, -sh_type) %>% 
-  summarise (all_shs = str_c(sh, collapse = ";")) %>% ungroup
+write_csv(export, paste0 (dig_freez, "Aquatic Hyphomycetes list/duarte_unite_annotated.csv"))
+
 
 # Objective 2. 
 all_sh_gf = global_fun$SH %>% strsplit(split = ";") %>% unlist
@@ -44,7 +43,7 @@ all_sh_gf = global_fun$SH %>% strsplit(split = ";") %>% unlist
 unite %>% mutate (in_gf = sh %in% all_sh_gf) %>% 
   ggplot(aes(x=in_gf, fill = sh_type))+
   geom_bar(position = "fill")+
-  theme_bw()+xlab(NULL)+
+  theme_bw(base_size = 16)+xlab(NULL)+
   coord_flip()+scale_fill_d3()+ggtitle("AH SHs in GlobalFungi")
 
 unite %>% mutate (in_gf = sh %in% all_sh_gf) %>% filter (in_gf) %>% 
@@ -53,10 +52,36 @@ unite %>% mutate (in_gf = sh %in% all_sh_gf) %>% filter (in_gf) %>%
   theme_bw()+xlab(NULL)+
   coord_flip()+scale_fill_d3()+ggtitle("AH SHs in GlobalFungi")
 
+
+###
+
+
+silva_lsu = read_tsv("C:/Data/digital-freezer/databases/SILVA/silva_lsu_species.txt", col_names = c("ids"), col_types = cols()) %>% 
+  separate(ids, into =  c("Accession", "Taxonomy"), sep = " ",extra = "merge")
+
+get_spp_silva = function(x){
+  my_x = tail(unlist (strsplit(x, split = ";")),1)
+  return (my_x)
+}
+
+silva_spps = silva_lsu %>% rowwise() %>% mutate (Species=get_spp_silva(Taxonomy), Accession = gsub(">","", Accession)) %>% ungroup 
+
+silva_spps %>% filter (Species %in% duarte_list$species)
+
+silva_spps %>% filter(str_detect(Species, str_c(duarte_list$species, collapse="|")))
+
+silva_spps %>% filter (grepl ("Alatospora", Taxonomy))
+
+
+
+#Pleosporales;Clavariopsis aquatica
+
+
 # let's build the table of interest 
-taxa_phd_list ="C:/Data/digital-freezer/Aquatic Hyphomycetes list/Taxa_AH_Chapter 1_PhD.xlsx"
+taxa_phd_list="C:/Data/digital-freezer/databases/Aquatic Hyphomycetes list/Taxa_AH_Chapter 1_PhD.xlsx"
 ah_unite = read_excel(taxa_phd_list, sheet = "sh_ids") %>% 
-  mutate(in_GF = species %in% global_fun$Species_GF) %>% select (-ref_sh, -other_sh)
+  mutate(in_GF = species %in% global_fun$Species_GF, in_unite = species %in% unite$species) %>% 
+  select (-ref_sh, -other_sh)
 
 mega_merge = ah_unite %>% mutate (type = "AH_set") %>% 
   full_join(unite %>% select(-taxonomy), by = "species") %>% 
@@ -69,10 +94,9 @@ global_fun %>% separate_longer_delim(SH, delim = ";") %>%
   rename (sh_GF=SH)
 
 
-
 ## let's define some lists
 # get duarte and expand the synonyms to long format
-duarte_list = read_xlsx("C:/Data/digital-freezer/Aquatic Hyphomycetes list/Lista F_Duarte.xlsx", sheet = 1, skip = 2) %>% 
+duarte_list = read_xlsx("C:/Data/digital-freezer/databases/Aquatic Hyphomycetes list/Lista F_Duarte.xlsx", sheet = 1, skip = 2) %>% 
   select(species=`Accepted name`, synonym = Synonyms)%>% 
   separate_longer_delim(synonym, delim = " / ")
 
@@ -82,6 +106,17 @@ cross_duarte = duarte_list %>%
          syn_in_AH = synonym %in% unique(ah_unite$species))
 
 ah_unite
+
+
+
+
+
+
+
+
+
+
+
 
 
 
