@@ -18,46 +18,63 @@ load_tax_nanopore <- function(path, silva = TRUE) {
 }
 
 #### 2. Plot taxonomy data
-plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15, relabund=T) {
-    require(tidyverse)
-    library(RColorBrewer)  # For color palettes
-    # Validate taxonomic level and required columns
-    valid_taxa_levels <- c("Domain", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
-    if (!taxa_level %in% valid_taxa_levels) stop("Invalid Taxonomic category")
-    if (!all(c("count", "sample") %in% colnames(df))) stop("Input df needs to contain the columns 'sample' and 'count'")
-    
-    # Subset and rename columns
-    subset_df <- df %>% select(all_of(taxa_level), count, sample)
-    colnames(subset_df) <- c("taxa", "count", "sample")
-    
-    # Identify the top taxa and collapse the rest into "Other"
-    top_taxa <- subset_df %>%
-        group_by(taxa) %>%
-        summarise(count = sum(count), .groups = 'drop') %>%
-        arrange(desc(count)) %>%
-        slice_head(n = n_taxa) %>%
-        pull(taxa)
-    
-    mylevels <- c(top_taxa, "Other")
-    mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(n_taxa + 1)
-    
-    # Create a summarized composition of taxa
-    composition <- subset_df %>%
-        mutate(taxa = ifelse(taxa %in% top_taxa, taxa, "Other")) %>%
-        group_by(taxa, sample) %>%
-        summarise(count = sum(count), .groups = 'drop') %>%
-        mutate(taxa = factor(taxa, levels = mylevels))
-    
-    # Plot the taxonomy composition
-    taxaplot <- composition %>%
-        ggplot(aes(x = sample, y = count, fill = taxa)) +
-        geom_col(position = ifelse(relabund,'fill','stack')) +
-        scale_fill_manual(values = mycolors, name = taxa_level) +
-        theme_bw() + 
-        xlab(NULL) + 
-        ylab("Relative abundance")
-    
-    return(taxaplot)
+plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15, relabund = TRUE, 
+                           facet_var = NULL, facet_nrow = NULL, facet_ncol = NULL) {
+  require(tidyverse)
+  library(RColorBrewer)
+  
+  # Validate taxonomic level and required columns
+  valid_taxa_levels <- c("Domain", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+  if (!taxa_level %in% valid_taxa_levels) stop("Invalid Taxonomic category")
+  if (!all(c("count", "sample") %in% colnames(df))) stop("Input df needs to contain the columns 'sample' and 'count'")
+  
+  # Check if facet_var exists in df
+  if (!is.null(facet_var) && !facet_var %in% colnames(df)) {
+    stop(paste("Facet variable", facet_var, "not found in data frame"))
+  }
+  
+  # Select relevant columns
+  select_cols <- c(taxa_level, "count", "sample", facet_var)
+  subset_df <- df %>% select(all_of(select_cols))
+  colnames(subset_df)[1:3] <- c("taxa", "count", "sample")
+  
+  # Identify top taxa
+  top_taxa <- subset_df %>%
+    group_by(taxa) %>%
+    summarise(count = sum(count), .groups = 'drop') %>%
+    arrange(desc(count)) %>%
+    slice_head(n = n_taxa) %>%
+    pull(taxa)
+  
+  mylevels <- c(top_taxa, "Other")
+  mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(n_taxa + 1)
+  
+  # Summarize composition
+  composition <- subset_df %>%
+    mutate(taxa = ifelse(taxa %in% top_taxa, taxa, "Other")) %>%
+    group_by(across(c("taxa", "sample", all_of(facet_var)))) %>%
+    summarise(count = sum(count), .groups = 'drop') %>%
+    mutate(taxa = factor(taxa, levels = mylevels))
+  
+  # Build plot
+  taxaplot <- composition %>%
+    ggplot(aes(x = sample, y = count, fill = taxa)) +
+    geom_col(position = ifelse(relabund, 'fill', 'stack')) +
+    scale_fill_manual(values = mycolors, name = taxa_level) +
+    theme_bw() +
+    xlab(NULL) +
+    ylab(ifelse(relabund, "Relative abundance", "Count")) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+          legend.text = element_text(size = 8)) +
+    guides(fill = guide_legend(nrow = n_taxa + 1))
+  
+  # Add faceting if specified
+  if (!is.null(facet_var)) {
+    facet_formula <- as.formula(paste("~", facet_var))
+    taxaplot <- taxaplot + facet_wrap(facet_formula, nrow = facet_nrow, ncol = facet_ncol)
+  }
+  
+  return(taxaplot)
 }
 
 #### 3. ONT abundance to microeco
