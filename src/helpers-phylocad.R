@@ -105,3 +105,17 @@ extract_gene_sequences <- function(fasta_files, gff_files, sample_ids, gene_name
   
   return(sequences)
 }
+
+#### 3. Quick ML tree from a DNAStringSet ####
+quick_tree <- function(seqs){
+  # Given a DNAXstringSet, it runs a quick ML tree starting from a distance mat
+  # and a NJ initial tree
+  msa_consensus <- AlignSeqs(seqs, verbose = F, iterations = 16)
+  
+  phy_data <- phyDat(as(msa_consensus, "matrix"), type = "DNA")
+  initial_tree <- nj(dist.ml(phy_data))
+  ml_tree <- pml(initial_tree, data = phy_data)
+  optimized_ml_tree <- optim.pml(ml_tree)
+  
+  return(optimized_ml_tree)
+}
