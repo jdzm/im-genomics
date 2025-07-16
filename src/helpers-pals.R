@@ -34,3 +34,21 @@ site_colors <- c("B1"   = "#003f5c","B2"= "#277191","B3"= "#4aa8c8","B4"= "#6fe2
                  "M1"   = "#ef5675","M2"= "#f67890","M3"= "#fc97ab","M4"= "#ffb5c4",
                  "C1"   = "#ffa600","C2"= "#ffb33e","C3"= "#ffc063","C4"= "#ffcc84")
 
+
+
+room_descs = c("Atelier architettura",
+               "Entrata, inizio rampa",
+               "Ufficio aperto ISAAC",
+               "Ufficio aperto IMC",
+               "Lato Stazione",
+               "Mensa", 
+               "Ufficio aperto IM", 
+               "Aula 60 persone",
+               "Aula-Atelier architettura")
+
+# room_descs = setNames(palette.colors (n=9), room_descs)
+room_descs = setNames(hcl.colors (n=9, palette = "Spectral"), room_descs)
+
+
+
+
