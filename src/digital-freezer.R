@@ -1,7 +1,7 @@
 library(tidyverse); library(readxl); library(ggsci); library(rgbif)
 
 dig_freez = "C:/Data/digital-freezer/databases/" # for local work
-dig_freez = "I:/Common/COLLABORATORI/Calore Red/Digital Freezer/" # for remote work
+dig_freez = "U:/LMA/Common/COLLABORATORI/Calore Red/Digital Freezer/" # for remote work
 
 # import all UNITE sequence names from the V10 2024 04 release.
 unite = read_delim(paste0(dig_freez, "UNITE/sh_headers_dynamic.txt"),delim = "|", col_types = cols(),
