@@ -57,3 +57,6 @@ read_in_gff <- function(input_file){
     mutate(gene = str_split_fixed(Parent,"-",2)[,2])
 }
 
+## list to ;-separated values (useful for GO)
+list_to_char <- function (x){return (paste0(unlist(x), collapse = ";"))}
+
