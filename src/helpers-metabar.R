@@ -65,7 +65,7 @@ plot_taxonomy <- function(df, taxa_level = "Genus", n_taxa = 15, relabund = TRUE
     xlab(NULL) +
     ylab(ifelse(relabund, "Relative abundance", "Count")) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
-          legend.text = element_text(size = 8)) +
+          legend.text = element_markdown(size = 8)) +
     guides(fill = guide_legend(nrow = n_taxa + 1))
   
   # Add faceting if specified
