@@ -111,4 +111,13 @@ rarecurve_ggstyle = function (mat, step = 50, df = F){
   return(curve) 
 }
 
+#### 5. Rarefy abundance matrix with microeco
+rarefy_microeco <- function(mat, rare_depth, seed=1225){
+  # takes a matrix and a rarefaction depth, returns a rarefied matrix
+  require(microeco)
+  set.seed(1225)
+  mt <- microtable$new(otu_table = mat)
+  mt$rarefy_samples(sample.size = rare_depth)
+  return (mt$otu_table)
+}
 
